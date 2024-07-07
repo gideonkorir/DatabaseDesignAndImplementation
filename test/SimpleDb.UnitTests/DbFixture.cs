@@ -1,19 +1,21 @@
 ﻿using SimpleDb.Files;
 using SimpleDb.Wal;
 
-namespace SimpleDb.UnitTests.Wal
+namespace SimpleDb.UnitTests
 {
-    public class LogManagerFixture
+    public class DbFixture
     {
         public LogManager LogManager { get; }
 
         public FileManager FileManager { get; }
 
-        public LogManagerFixture()
+        public Guid Id { get; } = Guid.NewGuid();
+
+        public DbFixture()
         {
-            var path = Path.Join(AppContext.BaseDirectory, "logs");
+            var path = Path.Join(AppContext.BaseDirectory, "db", Id.ToString());
             var dir = new DirectoryInfo(path);
-            if(dir.Exists)
+            if (dir.Exists)
             {
                 dir.Delete(true);
             }

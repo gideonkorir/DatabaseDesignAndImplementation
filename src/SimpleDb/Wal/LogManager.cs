@@ -83,7 +83,10 @@ namespace SimpleDb.Wal
         }
 
         public IEnumerator<Memory<byte>> GetEnumerator()
-            => new LogIterator(_fileManager, _currentBlock);
+        {
+            Flush();
+            return new LogIterator(_fileManager, _currentBlock);
+        }
 
         IEnumerator IEnumerable.GetEnumerator()
             => GetEnumerator();
