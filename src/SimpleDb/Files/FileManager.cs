@@ -37,7 +37,7 @@ namespace SimpleDb.Files
             lock(fs)
             {
                 fs.Seek(BlockSize * blockId.BlockNumber, SeekOrigin.Begin);
-                fs.ReadExactly(page.Bytes.Span);
+                fs.Read(page.Bytes.Span);
             }
         }
 
@@ -64,7 +64,7 @@ namespace SimpleDb.Files
         public int LengthInBlocks(string fileName)
         {
             FileStream fs = _files.GetOrAdd(fileName, _fsFactory);
-            int size = (int)(fs.Length / BlockSize);
+            int size = (int)(fs.Length % BlockSize == 0 ? fs.Length / BlockSize : (fs.Length / BlockSize) + 1);
             return size;
         }
 

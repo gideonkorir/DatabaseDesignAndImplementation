@@ -1,18 +1,24 @@
 ﻿using SimpleDb.Files;
 using SimpleDb.Wal;
 using System.Text;
+using Xunit.Abstractions;
 
 namespace SimpleDb.UnitTests.Wal
 {
-    public class LogManagerTests : IClassFixture<LogManagerFixture>
+    public class LogManagerTests
     {
+        private readonly int _blockSize = 4096;
         private readonly LogManager _logManager;
-        private readonly FileManager _fileManager;
+        private readonly ITestOutputHelper _testOutputHelper;
 
-        public LogManagerTests(LogManagerFixture logManager)
+        public LogManagerTests(ITestOutputHelper testOutputHelper)
         {
-            _logManager = logManager.LogManager;
-            _fileManager = logManager.FileManager;
+            //don't use xunit style fixture otherwise the tests will
+            //overwrite each others data.
+            var fx = new DbFixture();
+            _logManager = fx.LogManager;
+            _blockSize = fx.FileManager.BlockSize;
+            _testOutputHelper = testOutputHelper;
         }
 
         [Fact]
@@ -43,28 +49,39 @@ namespace SimpleDb.UnitTests.Wal
         [Fact]
         public void LogManagerWillAppendMultipleBlocks()
         {
-            int byteLength = (_fileManager.BlockSize - 4) / 3; //put max of 2 items in each block
+            //remove the 1st 4 bytes for the count
+            //and split by 3. The 1st 4 bytes track the next
+            //insert position in the page.
+            int byteLength = (_blockSize - 4) / 3;
 
-            byte[] bytes = new byte[byteLength];
-            int count = 17; //should give 6 blocks
+            //below should give 8 blocks because we are fitting 2 random {byteLength} bytes
+            //in the blocks. 17/3 + 1. It's 2 cause of the length of the bytes is also appended
+            //to the page
+            int count = 17;
             int lsn = -1;
+            Stack<byte[]> bytesWritten = new(17);
             for(int i = 0; i < count; i++)
             {
+                byte[] bytes = new byte[byteLength];
                 Random.Shared.NextBytes(bytes);
                 int cLsn = _logManager.Append(bytes);
                 Assert.True(cLsn > lsn);
                 lsn = cLsn;
+                bytesWritten.Push(bytes);
             }
 
             //now read the records in reverse
-            int iterCount = 0;
+            int iterCount = 0;            
             foreach(var rec in _logManager)
             {
-                Assert.Equal(bytes.Length, rec.Length);
+                Assert.Equal(byteLength, rec.Length);
+                _testOutputHelper.WriteLine("Comparing bytes for log record index: " +  iterCount);
                 iterCount += 1;
+                byte[] bytes = bytesWritten.Pop();
+                Assert.Equal(rec.ToArray(), bytes);
             }
 
-            Assert.Equal(count-1, iterCount);
+            Assert.Empty(bytesWritten); //ensure all log records have been processed
 
         }
 

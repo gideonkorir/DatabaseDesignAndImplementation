@@ -2,11 +2,11 @@
 
 namespace SimpleDb.UnitTests.Files
 {
-    public class FileManagerTests : IClassFixture<FileManagerFixture>
+    public class FileManagerTests : IClassFixture<DbFixture>
     {
         private readonly FileManager _fileManager;
 
-        public FileManagerTests(FileManagerFixture fixture)
+        public FileManagerTests(DbFixture fixture)
         {
             _fileManager = fixture.FileManager;
         }
