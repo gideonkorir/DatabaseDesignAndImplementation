@@ -5,26 +5,36 @@ namespace SimpleDb.UnitTests.BufferPool
 {
     public class BufferManagerTests : IClassFixture<DbFixture>
     {
-        private readonly BufferMgr bufferMgr;
         private const int POOL_SIZE = 5;
         private static readonly string s_file = $"{Guid.NewGuid()}.db";
+        private readonly DbFixture dbFixture;
         public BufferManagerTests(DbFixture dbFixture) 
         {
-            bufferMgr = new(dbFixture.FileManager, dbFixture.LogManager, POOL_SIZE);
+            this.dbFixture = dbFixture ?? throw new ArgumentNullException(nameof(dbFixture));
         }
 
-        [Fact]
-        public void BufferManager_Returns_Buffer()
+        [Theory]
+        [InlineData(BufferReplacementStrategy.Naive)]
+        [InlineData(BufferReplacementStrategy.LRU)]
+        [InlineData(BufferReplacementStrategy.LRM)]
+        [InlineData(BufferReplacementStrategy.Clock)]
+        public void BufferManager_Returns_Buffer(BufferReplacementStrategy replacementStrategy)
         {
+            BufferMgr bufferMgr = new(dbFixture.FileManager, dbFixture.LogManager, POOL_SIZE, replacementStrategy);
             var blockId = new BlockId(s_file, 0);
             var buffer = bufferMgr.Pin(blockId);
             Assert.NotNull(buffer);
             Assert.Equal(blockId, buffer.BlockId!.Value);
         }
 
-        [Fact]
-        public void UnpinningBufferReleasesIt()
+        [Theory]
+        [InlineData(BufferReplacementStrategy.Naive)]
+        [InlineData(BufferReplacementStrategy.LRU)]
+        [InlineData(BufferReplacementStrategy.LRM)]
+        [InlineData(BufferReplacementStrategy.Clock)]
+        public void UnpinningBufferReleasesIt(BufferReplacementStrategy replacementStrategy)
         {
+            BufferMgr bufferMgr = new(dbFixture.FileManager, dbFixture.LogManager, POOL_SIZE, replacementStrategy);
             var block1 = new BlockId(s_file, 0);
             var block2 = new BlockId(s_file, 1);
 
@@ -39,9 +49,14 @@ namespace SimpleDb.UnitTests.BufferPool
             Assert.Equal(POOL_SIZE, bufferMgr.FreeBufferCount);
         }
 
-        [Fact]
-        public void FailureToAcquireBufferThrows()
+        [Theory]
+        [InlineData(BufferReplacementStrategy.Naive)]
+        [InlineData(BufferReplacementStrategy.LRU)]
+        [InlineData(BufferReplacementStrategy.LRM)]
+        [InlineData(BufferReplacementStrategy.Clock)]
+        public void FailureToAcquireBufferThrows(BufferReplacementStrategy replacementStrategy)
         {
+            BufferMgr bufferMgr = new(dbFixture.FileManager, dbFixture.LogManager, POOL_SIZE, replacementStrategy);
             List<BlockId> blocks = [];
             for(int i = 0; i < POOL_SIZE; i++)
             {

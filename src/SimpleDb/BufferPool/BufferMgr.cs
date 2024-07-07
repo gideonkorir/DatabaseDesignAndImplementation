@@ -11,9 +11,16 @@ namespace SimpleDb.BufferPool
         private readonly IBufferReplacementStrategy _replacementStrategy;
         public int FreeBufferCount => _replacementStrategy.FreeBufferCount;
 
-        public BufferMgr(FileManager fileManager, LogManager logManager, int poolSize) 
+        public BufferMgr(FileManager fileManager, LogManager logManager, int poolSize, BufferReplacementStrategy replacementStrategy) 
         {
-            _replacementStrategy = new NaiveBufferReplacementStrategy(poolSize, index => new Buffer(fileManager, logManager));
+            _replacementStrategy = replacementStrategy switch
+            {
+                BufferReplacementStrategy.Naive => new NaiveBufferReplacementStrategy(poolSize, index => new Buffer(fileManager, logManager)),
+                BufferReplacementStrategy.LRU => new LRUBufferReplacementStrategy(poolSize, index => new Buffer(fileManager, logManager)),
+                BufferReplacementStrategy.LRM => new LRMBufferReplacementStrategy(poolSize, index => new Buffer(fileManager, logManager)),
+                BufferReplacementStrategy.Clock => new ClockBufferReplacementStrategy(poolSize, index => new Buffer(fileManager, logManager)),
+                _ => throw new NotImplementedException(nameof(replacementStrategy))
+            };
         }
 
         public void FlushAll(int txNumber)
