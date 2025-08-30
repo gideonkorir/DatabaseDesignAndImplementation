@@ -48,7 +48,7 @@ namespace SimpleDb.Files
             }
         }
 
-        public void WriteString(int offset, string value)
+        public void SetString(int offset, string value)
         {
             var charBytes = Encoding.UTF8.GetBytes(value);
             SetInt32(offset, charBytes.Length);

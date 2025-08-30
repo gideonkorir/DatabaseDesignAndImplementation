@@ -37,7 +37,7 @@ namespace SimpleDb.Files
             lock(fs)
             {
                 fs.Seek(BlockSize * blockId.BlockNumber, SeekOrigin.Begin);
-                fs.Read(page.Bytes.Span);
+                fs.ReadExactly(page.Bytes.Span);
             }
         }
 

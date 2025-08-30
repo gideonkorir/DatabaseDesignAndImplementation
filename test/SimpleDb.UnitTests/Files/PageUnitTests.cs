@@ -70,7 +70,7 @@ namespace SimpleDb.UnitTests.Files
 
             foreach(var (offset, value) in values)
             {
-                p.WriteString(offset, value);
+                p.SetString(offset, value);
                 string v = p.GetString(offset);
                 Assert.Equal(value, v);
             }
