@@ -9,22 +9,11 @@ using SimpleDb.Tx.Recovery;
 
 namespace SimpleDb.UnitTests.Tx
 {
-    public class TransactionTest
+    public class TransactionTest : AbstractTxTest
     {
-        private readonly DbFixture _fixture;
-        private readonly Transaction _tx;
-        private readonly BufferMgr _bufferMgr;
         public TransactionTest(ITestOutputHelper testOutputHelper) 
-        { 
-            _fixture = new DbFixture();
-            _bufferMgr = new BufferMgr(_fixture.FileManager, _fixture.LogManager, 10, BufferReplacementStrategy.Clock);
-            var loggerFactory = LoggerFactory.Create(configure =>
-            {
-                configure.AddProvider(new XUnitLoggerProvider(testOutputHelper));
-            });
-            
-            ILogger<Transaction> logger = loggerFactory.CreateLogger<Transaction>();
-            _tx = new Transaction(_fixture.FileManager, _fixture.LogManager, _bufferMgr, logger);
+            :base(testOutputHelper)
+        {
         }
 
         [Fact]

@@ -38,6 +38,9 @@ namespace SimpleDb.UnitTests.BufferPool
             var block1 = new BlockId(s_file, 0);
             var block2 = new BlockId(s_file, 1);
 
+            dbFixture.FileManager.Append(s_file);
+            dbFixture.FileManager.Append(s_file);
+
             var buffer = bufferMgr.Pin(block1);
             Assert.Equal(POOL_SIZE - 1, bufferMgr.FreeBufferCount);
             var buffer2 = bufferMgr.Pin(block2);
@@ -60,6 +63,7 @@ namespace SimpleDb.UnitTests.BufferPool
             List<BlockId> blocks = [];
             for(int i = 0; i < POOL_SIZE; i++)
             {
+                dbFixture.FileManager.Append(s_file);
                 blocks.Add(new BlockId(s_file, i));
                 bufferMgr.Pin(blocks[i]);
             }

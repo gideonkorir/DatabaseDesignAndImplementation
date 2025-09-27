@@ -14,10 +14,10 @@ namespace SimpleDb.UnitTests.Record
                 .AddStringField("ref", 48);
             var layout = new Layout(schema);
             int slotSize = layout.SlotSize;
-            Assert.Equal(0 + slotSize, layout.GetOffset("id"));
-            Assert.Equal(4 + slotSize, layout.GetOffset("name"));
+            Assert.Equal(4, layout.GetOffset("id"));
+            Assert.Equal(4 + Layout.LengthInBytes(layout.Schema["id"]), layout.GetOffset("name"));
             //extra 4 + slot size + length of name.
-            Assert.Equal(4 + slotSize + Page.MaxLength(100), layout.GetOffset("ref"));
+            Assert.Equal(4 + Layout.LengthInBytes(layout.Schema["name"]) + Layout.LengthInBytes(layout.Schema["id"]), layout.GetOffset("ref"));
         }
     }
 }

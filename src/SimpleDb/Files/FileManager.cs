@@ -34,7 +34,7 @@ namespace SimpleDb.Files
         public void Read(BlockId blockId, Page page)
         {
             FileStream fs = _files.GetOrAdd(blockId.FileName, _fsFactory);
-            lock(fs)
+            lock (fs)
             {
                 fs.Seek(BlockSize * blockId.BlockNumber, SeekOrigin.Begin);
                 fs.ReadExactly(page.Bytes.Span);
@@ -55,9 +55,8 @@ namespace SimpleDb.Files
         {
             FileStream fs = _files.GetOrAdd(fileName, _fsFactory);
             int nextBlockId = (int)(fs.Length / BlockSize);
-            byte[] b = new byte[BlockSize];
-            fs.Seek(nextBlockId * BlockSize, SeekOrigin.Begin);
-            fs.Write(b);
+            fs.SetLength(fs.Length + BlockSize);
+            fs.Flush();
             return new BlockId(fileName, nextBlockId);
         }
 

@@ -114,14 +114,14 @@ namespace SimpleDb.Record
 
         public bool Next()
         {
-            _currentSlot = _rp.NextAfter(_currentSlot);
+            _currentSlot = _rp.NextUsedSlotAfter(_currentSlot);
             //if we got -1 move to next block
             while(_currentSlot < 0)
             {
                 if (AtLastBlock())
                     return false;
                 MoveToBlock(_rp.BlockId.BlockNumber + 1);
-                _currentSlot = _rp.NextAfter(_currentSlot);
+                _currentSlot = _rp.NextEmptySlotAfter(_currentSlot);
             }
             return true;
         }
@@ -211,7 +211,7 @@ namespace SimpleDb.Record
 
         private bool AtLastBlock()
         {
-            return _rp.BlockId.BlockNumber == tx.FileSizeInBlocks(_fileName);
+            return _rp.BlockId.BlockNumber == tx.FileSizeInBlocks(_fileName)-1;
         }
     }
 }

@@ -12,9 +12,9 @@
 
             ArgumentNullException.ThrowIfNull(source);
 
-            foreach(var (name, info) in source)
+            foreach(Schema.FieldInfo field in source)
             {
-                schema.AddField(name, info.FieldType, info.Length);
+                schema.AddFieldAtOrdinal(field.Name, field.Ordinal, field.FieldType, field.Length);
             }
             return schema;
         }

@@ -13,10 +13,10 @@ namespace SimpleDb.Record
             Schema = schema ?? throw new ArgumentNullException(nameof(schema));
             SlotSize = 4; //flag for inuse/empty
             int pos = SlotSize; //fields start after the slot size
-            foreach(var (name, info) in schema)
+            foreach(var field in schema)
             {
-                _offsets.Add(name, pos);
-                pos += LengthInBytes(info);
+                _offsets.Add(field.Name, pos);
+                pos += LengthInBytes(field);
             }
             SlotSize = pos;
         }
