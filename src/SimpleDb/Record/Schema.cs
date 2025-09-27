@@ -1,6 +1,6 @@
 ﻿namespace SimpleDb.Record
 {
-    public class Schema : IEnumerable<KeyValuePair<string, Schema.FieldInfo>>
+    public class Schema : IEnumerable<Schema.FieldInfo>
     {
         private readonly Dictionary<string, FieldInfo> _fields = new(StringComparer.OrdinalIgnoreCase);
 
@@ -15,19 +15,37 @@
         }
         public Schema AddField(string name, SchemaFieldType columnType, int length)
         {
-            _fields.Add(name, new FieldInfo(columnType, length));
+            if (TryGetField(name, out _))
+            {
+                throw new SchemaException($"The field {name} already exists in the schema");
+            }
+            _fields.Add(name, new FieldInfo(name, _fields.Count, columnType, length));
+            return this;
+        }
+
+        public Schema AddFieldAtOrdinal(string name, int ordinal, SchemaFieldType columnType, int length)
+        {
+            if (TryGetField(name, out _))
+            {
+                throw new SchemaException($"The field {name} already exists in the schema");
+            }
+            if(_fields.Any(c => c.Value.Ordinal == ordinal))
+            {
+                throw new SchemaException($"The ordinal {ordinal} is already in use");
+            }
+            _fields.Add(name, new FieldInfo(name, ordinal, columnType, length));
             return this;
         }
 
         public bool TryGetField(string field, out FieldInfo fieldInfo)
             => _fields.TryGetValue(field, out fieldInfo);
 
-        public IEnumerator<KeyValuePair<string, FieldInfo>> GetEnumerator()
-            => _fields.GetEnumerator();
+        public IEnumerator<FieldInfo> GetEnumerator()
+            => _fields.OrderBy(c => c.Value.Ordinal).Select(c => c.Value).GetEnumerator();
 
         System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator()
             => _fields.GetEnumerator();
 
-        public record struct FieldInfo(SchemaFieldType FieldType, int Length);
+        public record struct FieldInfo(string Name, int Ordinal, SchemaFieldType FieldType, int Length);
     }
 }

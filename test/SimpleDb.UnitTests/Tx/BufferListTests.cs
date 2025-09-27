@@ -25,7 +25,8 @@ public class BufferListTests : IClassFixture<DbFixture>
     [Fact]
     public void BufferManagerPinsBuffer()
     {
-        var blockId = new BlockId(s_file, 1);
+        _fixture.FileManager.Append(s_file);
+        var blockId = new BlockId(s_file, 0);
         _bufferList.Pin(blockId);
         Assert.NotNull(_bufferList.GetBuffer(blockId, out var pins));
         Assert.Equal(1, pins);

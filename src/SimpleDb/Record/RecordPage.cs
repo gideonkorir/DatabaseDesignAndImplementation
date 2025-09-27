@@ -51,10 +51,10 @@ namespace SimpleDb.Record
             while (IsValidSlot(slot))
             {
                 _transaction.SetInt(BlockId, Offset(slot), Empty, false);
-                foreach(var (fieldName, info) in _layout.Schema)
+                foreach(var field in _layout.Schema)
                 {
-                    int fieldPos = FieldPos(slot, fieldName);
-                    if (info.FieldType == SchemaFieldType.I32)
+                    int fieldPos = FieldPos(slot, field.Name);
+                    if (field.FieldType == SchemaFieldType.I32)
                         _transaction.SetInt(BlockId, fieldPos, 0, false);
                     else
                         _transaction.SetString(BlockId, fieldPos, "", false);
@@ -63,13 +63,16 @@ namespace SimpleDb.Record
             }
         }
 
-        public int NextAfter(int slot)
+        public int NextEmptySlotAfter(int slot)
+            => SearchAfter(slot, Empty);
+            
+            public int NextUsedSlotAfter(int slot)
             => SearchAfter(slot, Used);
 
         public int InsertAfter(int slot)
         {
             int newSlot = SearchAfter(slot, Empty);
-            if(newSlot >= 0)
+            if (newSlot >= 0)
             {
                 SetFlag(newSlot, Used);
             }

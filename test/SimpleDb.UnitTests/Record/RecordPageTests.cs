@@ -33,6 +33,8 @@ namespace SimpleDb.UnitTests.Record
                 );
             var tx = new Transaction(fixture.FileManager, fixture.LogManager, pool, _logger);
 
+            tx.Append("tests.tbl");
+
             var schema = new Schema()
                 .AddIntField("id")
                 .AddStringField("name", 96);
