@@ -15,7 +15,11 @@
         }
         public Schema AddField(string name, SchemaFieldType columnType, int length)
         {
-            _fields.Add(name, new FieldInfo(columnType, length));
+            if (TryGetField(name, out _))
+            {
+                throw new SchemaException($"The field {name} already exists in the schema");
+            }
+            _fields.Add(name, new FieldInfo(_fields.Count, columnType, length));
             return this;
         }
 
@@ -23,11 +27,11 @@
             => _fields.TryGetValue(field, out fieldInfo);
 
         public IEnumerator<KeyValuePair<string, FieldInfo>> GetEnumerator()
-            => _fields.GetEnumerator();
+            => _fields.OrderBy(c => c.Value.Ordinal).GetEnumerator();
 
         System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator()
             => _fields.GetEnumerator();
 
-        public record struct FieldInfo(SchemaFieldType FieldType, int Length);
+        public record struct FieldInfo(int Ordinal, SchemaFieldType FieldType, int Length);
     }
 }
