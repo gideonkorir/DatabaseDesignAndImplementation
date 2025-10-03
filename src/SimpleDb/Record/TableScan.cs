@@ -17,6 +17,8 @@ namespace SimpleDb.Record
         private RecordPage _rp;
         private int _currentSlot = -1;
 
+        public Schema Schema => layout.Schema;
+
 #pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider adding the 'required' modifier or declaring as nullable.
         public TableScan(Transaction tx, string tblName, Layout layout)
 #pragma warning restore CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider adding the 'required' modifier or declaring as nullable.
