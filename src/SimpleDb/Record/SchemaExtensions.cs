@@ -1,4 +1,6 @@
-﻿namespace SimpleDb.Record
+﻿using SimpleDb.Files;
+
+namespace SimpleDb.Record
 {
     public static class SchemaExtensions
     {
@@ -6,13 +8,26 @@
 
         public static Schema AddStringField(this Schema schema, string name, int length) => schema.AddField(name, SchemaFieldType.String, length);
 
+        public static Schema AddFieldFromConstant(this Schema schema, string name, SimpleDb.Query.Constant value)
+        {
+            switch(value.FieldType)
+            {
+                case SchemaFieldType.I32:
+                    return schema.AddIntField(name);
+                case SchemaFieldType.String:
+                    return schema.AddStringField(name, Page.MaxLength(value.StringValue!.Length));
+                default:
+                    throw new ArgumentException($"Unsupported constant type: {value.FieldType}");
+            }
+        }
+
         public static Schema CopyFrom(this Schema schema, Schema source)
         {
             ArgumentNullException.ThrowIfNull(schema);
 
             ArgumentNullException.ThrowIfNull(source);
 
-            foreach(Schema.FieldInfo field in source)
+            foreach (Schema.FieldInfo field in source)
             {
                 schema.AddFieldAtOrdinal(field.Name, field.Ordinal, field.FieldType, field.Length);
             }

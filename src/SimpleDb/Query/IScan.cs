@@ -1,7 +1,11 @@
-﻿namespace SimpleDb.Query
+﻿using System.Diagnostics.CodeAnalysis;
+using SimpleDb.Record;
+
+namespace SimpleDb.Query
 {
     public interface IScan : IDisposable
     {
+        Schema Schema { get; }
         void BeforeFirst();
 
         bool Next();
@@ -12,8 +16,8 @@
 
         Constant GetValue(string fieldName);
 
-        bool TryGetInt32(string fieldName, out int value);
+        bool TryGetInt32(string fieldName, [NotNullWhen(true)] out int value);
 
-        bool TryGetString(string fieldName, out string? value);
+        bool TryGetString(string fieldName, [NotNullWhen(true)] out string? value);
     }
 }

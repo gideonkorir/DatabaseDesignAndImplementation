@@ -1,6 +1,6 @@
 ﻿namespace SimpleDb.Record
 {
-    public class Schema : IEnumerable<Schema.FieldInfo>
+    public class Schema : IEnumerable<Schema.FieldInfo>, IEquatable<Schema>
     {
         private readonly Dictionary<string, FieldInfo> _fields = new(StringComparer.OrdinalIgnoreCase);
 
@@ -39,6 +39,37 @@
 
         public bool TryGetField(string field, out FieldInfo fieldInfo)
             => _fields.TryGetValue(field, out fieldInfo);
+
+        public bool Equals(Schema? other)
+        {
+            if (other is null)
+                return false;
+            if (_fields.Count != other._fields.Count)
+                return false;
+            foreach (var field in _fields)
+            {
+                if (!other._fields.TryGetValue(field.Key, out var otherField))
+                    return false;
+                if (field.Value.Ordinal != otherField.Ordinal || field.Value.FieldType != otherField.FieldType || field.Value.Length != otherField.Length)
+                    return false;
+            }
+            return true;
+        }
+
+        public override bool Equals(object? obj) => obj is Schema schema && Equals(schema);
+
+        public override int GetHashCode()
+        {
+            int hash = 17;
+            foreach (var field in _fields.OrderBy(c => c.Value.Ordinal))
+            {
+                hash = hash * 23 + field.Key.GetHashCode(StringComparison.OrdinalIgnoreCase);
+                hash = hash * 23 + field.Value.Ordinal.GetHashCode();
+                hash = hash * 23 + field.Value.FieldType.GetHashCode();
+                hash = hash * 23 + field.Value.Length.GetHashCode();
+            }
+            return hash;
+        }
 
         public IEnumerator<FieldInfo> GetEnumerator()
             => _fields.OrderBy(c => c.Value.Ordinal).Select(c => c.Value).GetEnumerator();
