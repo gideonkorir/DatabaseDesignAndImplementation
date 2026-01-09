@@ -40,7 +40,7 @@ namespace SimpleDb.Query
 
         public bool Next()
         {
-            if (_leftHasValue)
+            if (!_leftHasValue)
                 return false;
             do
             {
