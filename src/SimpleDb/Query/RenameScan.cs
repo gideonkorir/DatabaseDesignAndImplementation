@@ -4,9 +4,10 @@ using System.Runtime.CompilerServices;
 
 namespace SimpleDb.Query
 {
-    public class RenameScan(IScan scan, Dictionary<string, string> renames) : IScan
+    public record struct Rename(string From, string To);
+    public class RenameScan(IScan scan, Rename[] renames) : IScan
     {
-        private readonly Dictionary<string, string> _reverseNames = renames.ToDictionary(c => c.Value, c => c.Key);
+        private bool _disposed = false;
 
         private Schema? _schema;
         public Schema Schema
@@ -18,7 +19,7 @@ namespace SimpleDb.Query
                     var s = new Schema();
                     foreach (var f in scan.Schema)
                     {
-                        string renamed = renames.TryGetValue(f.Name, out var renamedValue) ? renamedValue : f.Name;
+                        string renamed = GetNewName(f.Name);
                         s.AddFieldAtOrdinal(renamed, f.Ordinal, f.FieldType, f.Length);
                     }
                     _schema = s;
@@ -31,28 +32,57 @@ namespace SimpleDb.Query
             => scan.BeforeFirst();
 
         public void Dispose()
-            => scan.Dispose();
+        {
+            if (!_disposed)
+            {
+                scan.Dispose();
+                GC.SuppressFinalize(this);
+                _disposed = true;
+            }
+        }
 
         public int GetInt32(string fieldName)
-            => scan.GetInt32(GetUnderlyingName(fieldName));
+            => scan.GetInt32(GetOriginalName(fieldName));
 
         public string GetString(string fieldName)
-            => scan.GetString(GetUnderlyingName(fieldName));
+            => scan.GetString(GetOriginalName(fieldName));
 
         public Constant GetValue(string fieldName)
-            => scan.GetValue(GetUnderlyingName(fieldName));
+            => scan.GetValue(GetOriginalName(fieldName));
 
         public bool Next()
             => scan.Next();
 
-        public bool TryGetInt32(string fieldName, [NotNullWhen(true)] out int value)
-            => scan.TryGetInt32(GetUnderlyingName(fieldName), out value);
+        public bool TryGetInt32(string fieldName, out int value)
+            => scan.TryGetInt32(GetOriginalName(fieldName), out value);
 
         public bool TryGetString(string fieldName, [NotNullWhen(true)] out string? value)
-            => scan.TryGetString(GetUnderlyingName(fieldName), out value);
+            => scan.TryGetString(GetOriginalName(fieldName), out value);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private string GetUnderlyingName(string fieldName)
-            => _reverseNames.TryGetValue(fieldName, out var name) ? name : fieldName;
+        private string GetOriginalName(string fieldName)
+        {
+            foreach(var (from, to) in renames)
+            {
+                if(string.Equals(to, fieldName, StringComparison.OrdinalIgnoreCase))
+                {
+                    return from;
+                }
+            }
+            return fieldName;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public string GetNewName(string fieldName)
+        {
+            foreach (var (from, to) in renames)
+            {
+                if (string.Equals(from, fieldName, StringComparison.OrdinalIgnoreCase))
+                {
+                    return to;
+                }
+            }
+            return fieldName;
+        }
     }
 }

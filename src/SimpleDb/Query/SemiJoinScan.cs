@@ -5,7 +5,8 @@ namespace SimpleDb.Query
 {
     public class SemiJoinScan(IScan left, IScan right, Func<ScanRecord, ScanRecord, bool> predicate) : IScan
     {
-        public Schema Schema => throw new NotImplementedException();
+        private bool _disposed = false;
+        public Schema Schema => left.Schema;
 
         private bool _leftHasValue;
 
@@ -18,29 +19,31 @@ namespace SimpleDb.Query
 
         public void Dispose()
         {
-            left.Dispose(); right.Dispose();
+            if (!_disposed)
+            {
+                left.Dispose(); 
+                right.Dispose();
+                GC.SuppressFinalize(this);
+                _disposed = true;
+            }
         }
 
         public int GetInt32(string fieldName)
         {
-            return left.TryGetInt32(fieldName, out var value) ? value : right.GetInt32(fieldName);
+            return left.GetInt32(fieldName);
         }
 
         public string GetString(string fieldName)
         {
-            return left.TryGetString(fieldName, out var value) ? value : right.GetString(fieldName);
+            return right.GetString(fieldName);
         }
 
         public Constant GetValue(string fieldName)
-        {
-            if (left.Schema.TryGetField(fieldName, out _))
-                return left.GetValue(fieldName);
-            return right.GetValue(fieldName);
-        }
+            => left.GetValue(fieldName);
 
         public bool Next()
         {
-            if (_leftHasValue)
+            if (!_leftHasValue)
                 return false;
             do
             {
@@ -56,14 +59,14 @@ namespace SimpleDb.Query
             return false;
         }
 
-        public bool TryGetInt32(string fieldName, [NotNullWhen(true)] out int value)
+        public bool TryGetInt32(string fieldName, out int value)
         {
-            return left.TryGetInt32(fieldName, out value) || right.TryGetInt32(fieldName, out value);
+            return left.TryGetInt32(fieldName, out value);
         }
 
         public bool TryGetString(string fieldName, [NotNullWhen(true)] out string? value)
         {
-            return left.TryGetString(fieldName, out value) || right.TryGetString(fieldName, out value);
+            return left.TryGetString(fieldName, out value);
         }
     }
 }
