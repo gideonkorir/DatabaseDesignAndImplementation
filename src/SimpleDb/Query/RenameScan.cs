@@ -36,9 +36,9 @@ namespace SimpleDb.Query
             if (!_disposed)
             {
                 scan.Dispose();
-                GC.SuppressFinalize(this);
                 _disposed = true;
             }
+            GC.SuppressFinalize(this);
         }
 
         public int GetInt32(string fieldName)
@@ -73,7 +73,7 @@ namespace SimpleDb.Query
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public string GetNewName(string fieldName)
+        private string GetNewName(string fieldName)
         {
             foreach (var (from, to) in renames)
             {

@@ -23,9 +23,9 @@ namespace SimpleDb.Query
             {
                 left.Dispose(); 
                 right.Dispose();
-                GC.SuppressFinalize(this);
                 _disposed = true;
             }
+            GC.SuppressFinalize(this);
         }
 
         public int GetInt32(string fieldName)
