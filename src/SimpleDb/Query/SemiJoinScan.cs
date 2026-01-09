@@ -5,7 +5,7 @@ namespace SimpleDb.Query
 {
     public class SemiJoinScan(IScan left, IScan right, Func<ScanRecord, ScanRecord, bool> predicate) : IScan
     {
-        public Schema Schema => throw new NotImplementedException();
+        public Schema Schema => left.Schema;
 
         private bool _leftHasValue;
 
@@ -23,19 +23,17 @@ namespace SimpleDb.Query
 
         public int GetInt32(string fieldName)
         {
-            return left.TryGetInt32(fieldName, out var value) ? value : right.GetInt32(fieldName);
+            return left.GetInt32(fieldName);
         }
 
         public string GetString(string fieldName)
         {
-            return left.TryGetString(fieldName, out var value) ? value : right.GetString(fieldName);
+            return left.GetString(fieldName);
         }
 
         public Constant GetValue(string fieldName)
         {
-            if (left.Schema.TryGetField(fieldName, out _))
-                return left.GetValue(fieldName);
-            return right.GetValue(fieldName);
+            return left.GetValue(fieldName);
         }
 
         public bool Next()
@@ -58,12 +56,12 @@ namespace SimpleDb.Query
 
         public bool TryGetInt32(string fieldName, [NotNullWhen(true)] out int value)
         {
-            return left.TryGetInt32(fieldName, out value) || right.TryGetInt32(fieldName, out value);
+            return left.TryGetInt32(fieldName, out value);
         }
 
         public bool TryGetString(string fieldName, [NotNullWhen(true)] out string? value)
         {
-            return left.TryGetString(fieldName, out value) || right.TryGetString(fieldName, out value);
+            return left.TryGetString(fieldName, out value);
         }
     }
 }
