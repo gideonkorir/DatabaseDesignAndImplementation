@@ -31,7 +31,11 @@ namespace SimpleDb.Record
         public int GetOffset(string fieldName)
             => _offsets[fieldName];
 
+        public Schema.FieldInfo GetField(string fieldName)
+            => Schema.TryGetField(fieldName, out var field) ? field : throw new ArgumentException($"Field with name '{fieldName}' was not found");
 
+        public bool TryGetField(string fieldName, out Schema.FieldInfo field)
+            => Schema.TryGetField(fieldName, out field);
 
         public static int LengthInBytes(Schema.FieldInfo fieldInfo)
                 => fieldInfo.FieldType switch

@@ -1,6 +1,7 @@
 ﻿using SimpleDb.Files;
 using SimpleDb.Query;
 using SimpleDb.Tx;
+using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 
 namespace SimpleDb.Record
@@ -177,7 +178,7 @@ namespace SimpleDb.Record
             return false;
         }
 
-        public bool TryGetString(string fieldName, out string? value)
+        public bool TryGetString(string fieldName, [NotNullWhen(true)]out string? value)
         {
             ObjectDisposedException.ThrowIf(_disposed, this);
             if (layout.Schema.TryGetField(fieldName, out Schema.FieldInfo info) && info.FieldType == SchemaFieldType.String)

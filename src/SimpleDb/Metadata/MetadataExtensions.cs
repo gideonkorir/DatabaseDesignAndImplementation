@@ -4,13 +4,13 @@ namespace SimpleDb.Metadata;
 
 public static class MetadataExtensions
 {
-    public static IEnumerable<string> GetTableNames(this TableManager tableMgr, Tx.Transaction tx)
+    public static IEnumerable<string> GetTableNames(this CatalogManager tableMgr, Tx.Transaction tx)
     {
         ArgumentNullException.ThrowIfNull(tableMgr);
 
         ArgumentNullException.ThrowIfNull(tx);
 
-        using var scan = new TableScan(tx, TableManager.TableCatalog, tableMgr.GetTableLayout(TableManager.TableCatalog, tx));
+        using var scan = new TableScan(tx, CatalogManager.TableCatalog, tableMgr.GetTableLayout(CatalogManager.TableCatalog, tx));
         List<string> tableNames = new();
         while (scan.Next())
         {

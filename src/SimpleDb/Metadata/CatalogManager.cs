@@ -1,10 +1,9 @@
-using System.Runtime.ConstrainedExecution;
 using SimpleDb.Record;
 using SimpleDb.Tx;
 
 namespace SimpleDb.Metadata;
 
-public class TableManager
+public class CatalogManager
 {
     public const int MAX_NAME = 16;
     private readonly Layout tcatLayout, fcatLayout, vcatLayout, idxcatLayout;
@@ -16,7 +15,7 @@ public class TableManager
 
     IndexCatalog = "idxcat";
 
-    public TableManager(Transaction tx, bool isNew)
+    public CatalogManager(Transaction tx, bool isNew)
     {
         var tcatSchema = new Schema()
             .AddStringField("tblname", MAX_NAME)
@@ -179,24 +178,45 @@ public class TableManager
         scan.SetValue("fldname", fldName);
     }
     
-    public IndexInfo GetIndexInfo(string idxName, Transaction tx)
+    public IReadOnlyDictionary<string, IndexDefinition> GetIndexDefinition(string tableName, Transaction tx)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(idxName);
+        ArgumentException.ThrowIfNullOrWhiteSpace(tableName);
         ArgumentNullException.ThrowIfNull(tx);
-
+        Dictionary<string, IndexDefinition> def = [];
         using (TableScan scan = new(tx, IndexCatalog, idxcatLayout))
         {
             while (scan.Next())
             {
-                if (scan.GetString("idxname").Equals(idxName, StringComparison.OrdinalIgnoreCase))
+                if (scan.GetString("tblName").Equals(tableName, StringComparison.OrdinalIgnoreCase))
                 {
+                    string name = scan.GetString("idxname");
                     string tblName = scan.GetString("tblname");
                     string type = scan.GetString("indextype");
                     string fldName = scan.GetString("fldname");
-                    return new IndexInfo(idxName, type, tblName, fldName);
+                    def.Add(name, new IndexDefinition(name, type, tblName, fldName));
                 }
             }
         }
-        throw new ArgumentException($"The index '{idxName}' does not exist");
+        return def;
+    }
+
+    public Layout GetIndexLayout(IndexDefinition indexDefinition, Tx.Transaction tx)
+    {
+        ArgumentNullException.ThrowIfNull(indexDefinition);
+        Layout tableLayout = GetTableLayout(indexDefinition.TableName, tx);
+        Schema s = new Schema()
+            .AddIntField("block")
+            .AddIntField("id"); //the rid of the record
+        var field = tableLayout.GetField(indexDefinition.FieldName);
+        if (field.FieldType == SchemaFieldType.I32)
+            s.AddIntField("dataval");
+        else
+            s.AddStringField(indexDefinition.FieldName, Layout.LengthInBytes(field));
+        return new Layout(s);
+    }
+
+    public Index Open(IndexDefinition indexDefinition, Tx.Transaction tx)
+    {
+        throw new NotImplementedException();
     }
 }

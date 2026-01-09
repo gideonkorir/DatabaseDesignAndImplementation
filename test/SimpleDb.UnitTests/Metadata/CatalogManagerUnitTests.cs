@@ -14,10 +14,10 @@ public class TableManagerUnitTests : AbstractTxTest
     [Fact]
     public void Catalog_Tables_Are_Created()
     {
-        TableManager mgr = new(_tx, true);
+        CatalogManager mgr = new(_tx, true);
 
-        var tableCatalog = Path.Join(_fixture.FileManager.Directory.FullName, $"{TableManager.TableCatalog}.tbl");
-        var fieldCatalog = Path.Join(_fixture.FileManager.Directory.FullName, $"{TableManager.FieldCatalog}.tbl");
+        var tableCatalog = Path.Join(_fixture.FileManager.Directory.FullName, $"{CatalogManager.TableCatalog}.tbl");
+        var fieldCatalog = Path.Join(_fixture.FileManager.Directory.FullName, $"{CatalogManager.FieldCatalog}.tbl");
 
         Assert.True(File.Exists(tableCatalog));
         Assert.True(File.Exists(fieldCatalog));
@@ -26,7 +26,7 @@ public class TableManagerUnitTests : AbstractTxTest
     [Fact]
     public void TableCatalog_Persisted_OK()
     {
-        TableManager mgr = new(_tx, true);
+        CatalogManager mgr = new(_tx, true);
 
         Schema schema = new Schema()
             .AddIntField("id")

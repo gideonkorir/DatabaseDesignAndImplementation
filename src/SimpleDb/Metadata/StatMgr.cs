@@ -6,13 +6,13 @@ namespace SimpleDb.Metadata;
 public class StatMgr
 {
     private long numberOfCalls = -1;
-    private readonly TableManager _tableMgr;
+    private readonly CatalogManager _tableMgr;
 
-    private readonly Dictionary<string, StatInfo> _stats = new(StringComparer.OrdinalIgnoreCase);
+    private readonly Dictionary<string, StatInfo> _tableStats = new(StringComparer.OrdinalIgnoreCase);
 
-    private readonly ReaderWriterLockSlim _lock = new();
+    private readonly ReaderWriterLockSlim _tableLock = new();
 
-    public StatMgr(TableManager tableMgr, Tx.Transaction tx)
+    public StatMgr(CatalogManager tableMgr, Tx.Transaction tx)
     {
         ArgumentNullException.ThrowIfNull(tx);
         _tableMgr = tableMgr ?? throw new ArgumentNullException(nameof(tableMgr));
@@ -28,23 +28,31 @@ public class StatMgr
             RefreshStats(tx);
         }
 
-        _lock.EnterReadLock();
+        _tableLock.EnterReadLock();
         try
         {
-            return _stats.TryGetValue(tableName, out var stats)
+            return _tableStats.TryGetValue(tableName, out var stats)
                 ? stats
                 : new StatInfo(0, 0); //not found - must be new table.
         }
         finally
         {
-            if (_lock.IsReadLockHeld)
-                _lock.ExitReadLock();
+            if (_tableLock.IsReadLockHeld)
+                _tableLock.ExitReadLock();
         }
+    }
+
+    public IndexStatInfo GetIndexStats(IndexDefinition indexDefinition, Tx.Transaction tx)
+    {
+        ArgumentNullException.ThrowIfNull(indexDefinition);
+        StatInfo tableStats = GetStatInfo(indexDefinition.TableName, tx);
+        Layout indexLayout = _tableMgr.GetIndexLayout(indexDefinition, tx);
+        return new IndexStatInfo(indexDefinition, tableStats, indexLayout, tx.BlockSize);
     }
 
     private void RefreshStats(Tx.Transaction tx)
     {
-        _lock.EnterWriteLock();//first time - get stats for all tables
+        _tableLock.EnterWriteLock();//first time - get stats for all tables
         try
         {
             foreach (var tbl in _tableMgr.GetTableNames(tx))
@@ -54,8 +62,8 @@ public class StatMgr
         }
         finally
         {
-            if (_lock.IsWriteLockHeld)
-                _lock.ExitWriteLock();
+            if (_tableLock.IsWriteLockHeld)
+                _tableLock.ExitWriteLock();
         }
     }
 
@@ -70,7 +78,7 @@ public class StatMgr
             numberOfBlocks = scan.RID.BlockId + 1; //block number is 0-based
         }
         var newStats = new StatInfo(numberOfBlocks, numberOfRecords);
-        _stats[tableName] = newStats; //add or update
+        _tableStats[tableName] = newStats; //add or update
         return newStats;
     }
 }

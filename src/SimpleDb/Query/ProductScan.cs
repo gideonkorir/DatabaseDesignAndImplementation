@@ -1,4 +1,5 @@
 using SimpleDb.Record;
+using System.Diagnostics.CodeAnalysis;
 
 namespace SimpleDb.Query;
 
@@ -44,9 +45,9 @@ public class ProductScan : IScan
             return false; //we have nothing to do
 
         if (_right.Next())
-            return true;
-        _right.BeforeFirst();
-        if (_left.Next())
+            return true; //keep going until we exhaust right
+        _right.BeforeFirst(); //if we are here, reset right
+        if (_left.Next()) //move to next element in left
             return _right.Next();
         return false;
     }
@@ -85,7 +86,7 @@ public class ProductScan : IScan
         return false;
     }
 
-    public bool TryGetString(string fieldName, out string? value)
+    public bool TryGetString(string fieldName, [NotNullWhen(true)] out string? value)
     {
         if (_left.TryGetString(fieldName, out value) || _right.TryGetString(fieldName, out value))
             return true;

@@ -16,10 +16,7 @@ namespace SimpleDb.Tx.Concurrency
                 DateTime startTime = DateTime.UtcNow;
                 while(HasXLock(blockId) && !HasTimedOut(startTime))
                 {
-                    if(!Monitor.TryEnter(_lock, 100)) //wait for 100ms
-                    {
-                        continue;
-                    }
+                    Monitor.Wait(_lock, 50);
                 }
                 if (HasXLock(blockId))
                     throw new AcquireLockFailedException($"Failed to acquire s lock for bloc {blockId}");

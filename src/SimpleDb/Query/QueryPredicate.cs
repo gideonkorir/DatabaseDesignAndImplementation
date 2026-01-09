@@ -4,7 +4,7 @@ namespace SimpleDb.Query;
 
 public class QueryPredicate
 {
-    private List<Term> _terms = new();
+    private readonly List<Term> _terms = new();
 
     private QueryPredicate()
     {
@@ -64,7 +64,7 @@ public class QueryPredicate
     {
         foreach (var term in _terms)
         {
-            var constant = term.GetEquatesWithConstantOrNull(fieldName);
+            var constant = term.EquatesWithConstant(fieldName);
             if (constant is not null)
                 return constant;
         }
@@ -75,7 +75,7 @@ public class QueryPredicate
     {
         foreach (var term in _terms)
         {
-            var field = term.GetEquatesWithFieldOrNull(fieldName);
+            var field = term.EquatesWithField(fieldName);
             if (field is not null)
                 return field;
         }
