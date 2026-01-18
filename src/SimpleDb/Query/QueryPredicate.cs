@@ -64,7 +64,7 @@ public class QueryPredicate
     {
         foreach (var term in _terms)
         {
-            var constant = term.GetEquatesWithConstantOrNull(fieldName);
+            var constant = term.EquatesWithConstant(fieldName);
             if (constant is not null)
                 return constant;
         }
@@ -75,7 +75,7 @@ public class QueryPredicate
     {
         foreach (var term in _terms)
         {
-            var field = term.GetEquatesWithFieldOrNull(fieldName);
+            var field = term.EquatesWithField(fieldName);
             if (field is not null)
                 return field;
         }

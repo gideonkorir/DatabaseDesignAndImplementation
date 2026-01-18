@@ -49,7 +49,7 @@ namespace SimpleDb.Tx.Concurrency
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private static bool HasTimedOut(DateTime startTime)
-            => DateTime.UtcNow.Subtract(startTime).TotalSeconds >= 10_000;
+            => DateTime.UtcNow.Subtract(startTime).TotalSeconds >= 10;
 
         public void UnLock(BlockId blockId)
         {
