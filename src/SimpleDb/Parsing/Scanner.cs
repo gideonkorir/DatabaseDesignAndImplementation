@@ -103,6 +103,8 @@ namespace SimpleDb.Parsing
                 
             }
 
+            _tokens.Add(new SyntaxToken(TokenType.EOF, string.Empty, _pos, null));
+
             return _tokens;
         }
 

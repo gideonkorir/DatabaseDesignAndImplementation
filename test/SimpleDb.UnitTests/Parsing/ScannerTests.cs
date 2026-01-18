@@ -28,9 +28,10 @@ public class ScannerTests
         var tokens = scanner.GetTokens();
 
         // Assert
-        Assert.Single(tokens);
+        Assert.Equal(2, tokens.Count);
         Assert.Equal(expectedType, tokens[0].Type);
         Assert.Equal(keyword, tokens[0].Lexeme);
+        Assert.Equal(TokenType.EOF, tokens[^1].Type);
         Assert.Empty(scanner.SyntaxErrors);
     }
 
@@ -54,10 +55,11 @@ public class ScannerTests
         }
         else
         {
-            Assert.Single(tokens);
+            Assert.Equal(2, tokens.Count);
             Assert.Equal(TokenType.Identifier, tokens[0].Type);
             Assert.Equal(expectedLexeme, tokens[0].Lexeme);
             Assert.Equal(expectedLexeme, tokens[0].Literal);
+            Assert.Equal(TokenType.EOF, tokens[^1].Type);
         }
     }
 
@@ -75,9 +77,10 @@ public class ScannerTests
         var tokens = scanner.GetTokens();
 
         // Assert
-        Assert.Single(tokens);
+        Assert.Equal(2, tokens.Count);
         Assert.Equal(TokenType.IntValue, tokens[0].Type);
         Assert.Equal(expectedValue, tokens[0].Literal);
+        Assert.Equal(TokenType.EOF, tokens[^1].Type);
     }
 
     [Theory]
@@ -95,9 +98,10 @@ public class ScannerTests
         var tokens = scanner.GetTokens();
 
         // Assert
-        Assert.Single(tokens);
+        Assert.Equal(2, tokens.Count);
         Assert.Equal(TokenType.StringValue, tokens[0].Type);
         Assert.Equal(expectedValue, tokens[0].Literal);
+        Assert.Equal(TokenType.EOF, tokens[^1].Type);
     }
 
     [Theory]
@@ -121,8 +125,9 @@ public class ScannerTests
         var tokens = scanner.GetTokens();
 
         // Assert
-        Assert.Single(tokens);
+        Assert.Equal(2, tokens.Count);
         Assert.Equal(expectedType, tokens[0].Type);
+        Assert.Equal(TokenType.EOF, tokens[^1].Type);
         Assert.Equal(op, tokens[0].Lexeme);
     }
 
@@ -139,8 +144,9 @@ public class ScannerTests
         var tokens = scanner.GetTokens();
 
         // Assert
-        Assert.Single(tokens);
+        Assert.Equal(2, tokens.Count);
         Assert.Equal(expectedType, tokens[0].Type);
+        Assert.Equal(TokenType.EOF, tokens[^1].Type);
         Assert.Equal(op, tokens[0].Lexeme);
     }
 
@@ -155,13 +161,14 @@ public class ScannerTests
         var tokens = scanner.GetTokens();
 
         // Assert
-        Assert.Equal(4, tokens.Count);
+        Assert.Equal(5, tokens.Count);
         Assert.Equal(TokenType.Select, tokens[0].Type);
         Assert.Equal(TokenType.Identifier, tokens[1].Type);
         Assert.Equal("id", tokens[1].Literal);
         Assert.Equal(TokenType.From, tokens[2].Type);
         Assert.Equal(TokenType.Identifier, tokens[3].Type);
         Assert.Equal("users", tokens[3].Literal);
+        Assert.Equal(TokenType.EOF, tokens[^1].Type);
         Assert.Empty(scanner.SyntaxErrors);
     }
 
@@ -176,7 +183,7 @@ public class ScannerTests
         var tokens = scanner.GetTokens();
 
         // Assert
-        Assert.Equal(8, tokens.Count);
+        Assert.Equal(9, tokens.Count);
         Assert.Equal(TokenType.Select, tokens[0].Type);
         Assert.Equal(TokenType.Identifier, tokens[1].Type);
         Assert.Equal(TokenType.Plus, tokens[2].Type);
@@ -187,6 +194,7 @@ public class ScannerTests
         Assert.Equal(2, tokens[5].Literal);
         Assert.Equal(TokenType.From, tokens[6].Type);
         Assert.Equal(TokenType.Identifier, tokens[7].Type);
+        Assert.Equal(TokenType.EOF, tokens[^1].Type);
     }
 
     [Fact]
@@ -200,7 +208,7 @@ public class ScannerTests
         var tokens = scanner.GetTokens();
 
         // Assert
-        Assert.Equal(8, tokens.Count);
+        Assert.Equal(9, tokens.Count);
         Assert.Equal(TokenType.Select, tokens[0].Type);
         Assert.Equal(TokenType.LeftParen, tokens[1].Type);
         Assert.Equal(TokenType.Identifier, tokens[2].Type);
@@ -209,6 +217,7 @@ public class ScannerTests
         Assert.Equal(TokenType.RightParen, tokens[5].Type);
         Assert.Equal(TokenType.From, tokens[6].Type);
         Assert.Equal(TokenType.Identifier, tokens[7].Type);
+        Assert.Equal(TokenType.EOF, tokens[^1].Type);
     }
 
     [Fact]
@@ -222,11 +231,12 @@ public class ScannerTests
         var tokens = scanner.GetTokens();
 
         // Assert
-        Assert.Equal(4, tokens.Count);
+        Assert.Equal(5, tokens.Count);
         Assert.Equal(TokenType.Select, tokens[0].Type);
         Assert.Equal(TokenType.Identifier, tokens[1].Type);
         Assert.Equal(TokenType.From, tokens[2].Type);
         Assert.Equal(TokenType.Identifier, tokens[3].Type);
+        Assert.Equal(TokenType.EOF, tokens[^1].Type);
     }
 
     [Fact]
@@ -240,7 +250,7 @@ public class ScannerTests
         var tokens = scanner.GetTokens();
 
         // Assert
-        Assert.Equal(11, tokens.Count);
+        Assert.Equal(12, tokens.Count);
         Assert.Equal(TokenType.Identifier, tokens[0].Type);
         Assert.Equal(TokenType.Equal, tokens[1].Type);
         Assert.Equal(TokenType.IntValue, tokens[2].Type);
@@ -253,6 +263,7 @@ public class ScannerTests
         Assert.Equal(TokenType.BangEqual, tokens[9].Type);
         Assert.Equal(TokenType.StringValue, tokens[10].Type);
         Assert.Equal("active", tokens[10].Literal);
+        Assert.Equal(TokenType.EOF, tokens[^1].Type);
     }
 
     [Fact]
@@ -266,11 +277,12 @@ public class ScannerTests
         var tokens = scanner.GetTokens();
 
         // Assert
-        Assert.Equal(4, tokens.Count);
+        Assert.Equal(5, tokens.Count);
         Assert.Equal(TokenType.Select, tokens[0].Type);
         Assert.Equal(TokenType.Identifier, tokens[1].Type);
         Assert.Equal(TokenType.From, tokens[2].Type);
         Assert.Equal(TokenType.Identifier, tokens[3].Type);
+        Assert.Equal(TokenType.EOF, tokens[^1].Type);
     }
 
     [Fact]
@@ -298,8 +310,9 @@ public class ScannerTests
         var tokens = scanner.GetTokens();
 
         // Assert
-        Assert.Empty(tokens);
+        Assert.Single(tokens);
         Assert.Empty(scanner.SyntaxErrors);
+        Assert.Equal(TokenType.EOF, tokens[^1].Type);
     }
 
     [Fact]
@@ -312,7 +325,8 @@ public class ScannerTests
         var tokens = scanner.GetTokens();
 
         // Assert
-        Assert.Empty(tokens);
+        Assert.Single(tokens);
+        Assert.Equal(TokenType.EOF, tokens[^1].Type);
         Assert.Empty(scanner.SyntaxErrors);
     }
 
@@ -327,10 +341,11 @@ public class ScannerTests
         var tokens = scanner.GetTokens();
 
         // Assert
-        Assert.Equal(2, tokens.Count);
+        Assert.Equal(3, tokens.Count);
         Assert.Equal(TokenType.Update, tokens[0].Type);
         Assert.Equal(TokenType.Identifier, tokens[1].Type);
         Assert.Equal("users", tokens[1].Literal);
+        Assert.Equal(TokenType.EOF, tokens[^1].Type);
     }
 
     [Fact]
@@ -344,10 +359,11 @@ public class ScannerTests
         var tokens = scanner.GetTokens();
 
         // Assert
-        Assert.Equal(3, tokens.Count);
+        Assert.Equal(4, tokens.Count);
         Assert.Equal(TokenType.Delete, tokens[0].Type);
         Assert.Equal(TokenType.From, tokens[1].Type);
         Assert.Equal(TokenType.Identifier, tokens[2].Type);
+        Assert.Equal(TokenType.EOF, tokens[^1].Type);
     }
 
     [Fact]
@@ -361,7 +377,7 @@ public class ScannerTests
         var tokens = scanner.GetTokens();
 
         // Assert
-        Assert.Equal(11, tokens.Count);
+        Assert.Equal(12, tokens.Count);
         Assert.Equal(TokenType.IntValue, tokens[0].Type);
         Assert.Equal(TokenType.Plus, tokens[1].Type);
         Assert.Equal(TokenType.IntValue, tokens[2].Type);
@@ -373,6 +389,7 @@ public class ScannerTests
         Assert.Equal(TokenType.IntValue, tokens[8].Type);
         Assert.Equal(TokenType.Percent, tokens[9].Type);
         Assert.Equal(TokenType.IntValue, tokens[10].Type);
+        Assert.Equal(TokenType.EOF, tokens[^1].Type);
     }
 
     [Fact]
@@ -386,9 +403,10 @@ public class ScannerTests
         var tokens = scanner.GetTokens();
 
         // Assert
-        Assert.Equal(2, tokens.Count);
+        Assert.Equal(3, tokens.Count);
         Assert.Equal(0, tokens[0].Start);
         Assert.Equal(7, tokens[1].Start);
+        Assert.Equal(TokenType.EOF, tokens[^1].Type);
     }
 
     [Fact]
@@ -402,9 +420,10 @@ public class ScannerTests
         var tokens = scanner.GetTokens();
 
         // Assert
-        Assert.Single(tokens);
+        Assert.Equal(2, tokens.Count);
         Assert.Equal(TokenType.StringValue, tokens[0].Type);
         Assert.Equal("unterminated", tokens[0].Literal);
+        Assert.Equal(TokenType.EOF, tokens[^1].Type);
     }
 
     [Fact]
@@ -418,10 +437,11 @@ public class ScannerTests
         var tokens = scanner.GetTokens();
 
         // Assert
-        Assert.Equal(3, tokens.Count);
+        Assert.Equal(4, tokens.Count);
         Assert.Equal(TokenType.BangEqual, tokens[0].Type);
         Assert.Equal(TokenType.LessThanEqual, tokens[1].Type);
         Assert.Equal(TokenType.GreaterThanEqual, tokens[2].Type);
+        Assert.Equal(TokenType.EOF, tokens[^1].Type);
     }
 
     [Fact]
@@ -435,7 +455,7 @@ public class ScannerTests
         var tokens = scanner.GetTokens();
 
         // Assert
-        Assert.Equal(8, tokens.Count);
+        Assert.Equal(9, tokens.Count);
         Assert.Equal(TokenType.Select, tokens[0].Type);
         Assert.Equal(TokenType.Identifier, tokens[1].Type);
         Assert.Equal(TokenType.AS, tokens[2].Type);
@@ -444,5 +464,6 @@ public class ScannerTests
         Assert.Equal(TokenType.Identifier, tokens[5].Type);
         Assert.Equal(TokenType.AS, tokens[6].Type);
         Assert.Equal(TokenType.Identifier, tokens[7].Type);
+        Assert.Equal(TokenType.EOF, tokens[^1].Type);
     }
 }

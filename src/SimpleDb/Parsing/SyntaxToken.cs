@@ -10,7 +10,7 @@ namespace SimpleDb.Parsing
 
     public enum TokenType
     {
-        None,
+        EOF,
         Select,
         Update,
         Delete,
