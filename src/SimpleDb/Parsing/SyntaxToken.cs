@@ -16,8 +16,9 @@ namespace SimpleDb.Parsing
         Delete,
         Identifier,
         Comma,
-        AS,
+        As,
         From,
+        Where,
 
         //binary
         Plus,

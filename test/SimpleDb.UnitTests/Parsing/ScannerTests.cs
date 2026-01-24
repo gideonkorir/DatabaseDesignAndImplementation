@@ -13,8 +13,8 @@ public class ScannerTests
     [InlineData("DELETE", TokenType.Delete)]
     [InlineData("from", TokenType.From)]
     [InlineData("FROM", TokenType.From)]
-    [InlineData("as", TokenType.AS)]
-    [InlineData("AS", TokenType.AS)]
+    [InlineData("as", TokenType.As)]
+    [InlineData("AS", TokenType.As)]
     [InlineData("and", TokenType.And)]
     [InlineData("AND", TokenType.And)]
     [InlineData("or", TokenType.Or)]
@@ -458,11 +458,11 @@ public class ScannerTests
         Assert.Equal(9, tokens.Count);
         Assert.Equal(TokenType.Select, tokens[0].Type);
         Assert.Equal(TokenType.Identifier, tokens[1].Type);
-        Assert.Equal(TokenType.AS, tokens[2].Type);
+        Assert.Equal(TokenType.As, tokens[2].Type);
         Assert.Equal(TokenType.Identifier, tokens[3].Type);
         Assert.Equal(TokenType.From, tokens[4].Type);
         Assert.Equal(TokenType.Identifier, tokens[5].Type);
-        Assert.Equal(TokenType.AS, tokens[6].Type);
+        Assert.Equal(TokenType.As, tokens[6].Type);
         Assert.Equal(TokenType.Identifier, tokens[7].Type);
         Assert.Equal(TokenType.EOF, tokens[^1].Type);
     }

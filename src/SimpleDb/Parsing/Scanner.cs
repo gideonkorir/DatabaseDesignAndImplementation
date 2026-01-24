@@ -11,7 +11,8 @@ namespace SimpleDb.Parsing
             ["update"] = TokenType.Update,
             ["delete"] = TokenType.Delete,
             ["from"] = TokenType.From,
-            ["as"] = TokenType.AS,
+            ["where"] = TokenType.Where,
+            ["as"] = TokenType.As,
             ["and"] = TokenType.And,
             ["or"] = TokenType.Or
         };
