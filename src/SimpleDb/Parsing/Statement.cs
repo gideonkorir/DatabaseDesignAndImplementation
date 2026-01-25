@@ -3,9 +3,6 @@
     public enum SyntaxKind
     {
         //select
-        Select,
-        Update,
-        Delete,
         Literal,
         Binary,
         Where,
@@ -17,7 +14,7 @@
         DeleteStatement,
         SubQuery,
 
-        //expresions
+        //expressions
         Star,
         Unary,
         ParenthesizedExpr,

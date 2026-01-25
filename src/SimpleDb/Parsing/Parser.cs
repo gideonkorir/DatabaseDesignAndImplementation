@@ -15,6 +15,7 @@
                 TokenType.Update => ParseUpdateStatement(),
                 TokenType.Delete => ParseDeleteStatement(),
                 TokenType.EOF => throw new Exception("Unexpected end of input."),
+                _ => throw new Exception($"Unexpected token: [{Current.Type}] '{Current.Lexeme}' as start of sql statement")
             };
         }
 
@@ -34,6 +35,10 @@
                     // No more columns to parse
                     break;
                 }
+            }
+            if(columns.Count == 0)
+            {
+                throw new Exception("Expected at least one column in SELECT statement.");
             }
 
             FromClause fromExpr = FromClause();

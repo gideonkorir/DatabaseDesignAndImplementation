@@ -18,7 +18,7 @@ namespace SimpleDb.Parsing
         };
 
         private int _pos = 0, _start = 0;
-        private List<SyntaxToken> _tokens = [];
+        private readonly List<SyntaxToken> _tokens = [];
 
         private bool IsAtEnd => _pos >= queryText.Length;
 
@@ -121,7 +121,7 @@ namespace SimpleDb.Parsing
         private char Peek(int count)
         {
             int p = _pos + count;
-            if(count < queryText.Length)
+            if(p < queryText.Length)
                 return queryText[p];
             return '\0';
         }
@@ -160,8 +160,12 @@ namespace SimpleDb.Parsing
             //_pos is now at the first non digit char
             //so the number is from _start to _pos-1
             if (int.TryParse(queryText.AsSpan(_start, _pos - _start), null, out int v))
+            {
                 AddToken(TokenType.IntValue, v);
-            Error($"Unable to parse number");
+            }
+            {
+                Error($"Unable to parse number");
+            }
         }
 
         private void AddString()
