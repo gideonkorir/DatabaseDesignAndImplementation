@@ -10,9 +10,15 @@
         Delete,
         Identifier,
         Comma,
+        Dot,
         As,
         From,
         Where,
+        Inner,
+        Outer,
+        Cross,
+        Join,
+        On,
 
         //binary
         Plus,

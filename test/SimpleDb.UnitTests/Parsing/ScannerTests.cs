@@ -512,4 +512,35 @@ public class ScannerTests
         Assert.Equal(TokenType.Identifier, tokens[11].Type);
         Assert.Equal(TokenType.EOF, tokens[^1].Type);
     }
+
+    [Fact]
+    public void Scanner_QueryWithJoinAndMultipleColumns()
+    {
+        // Arrange
+        var query = "select id, name, amount from users as u join orders as o on id = user_id";
+        var scanner = new Scanner(query);
+        // Act
+        var tokens = scanner.GetTokens();
+        // Assert
+        Assert.Equal(19, tokens.Count);
+        Assert.Equal(TokenType.Select, tokens[0].Type);
+        Assert.Equal(TokenType.Identifier, tokens[1].Type);
+        Assert.Equal(TokenType.Comma, tokens[2].Type);
+        Assert.Equal(TokenType.Identifier, tokens[3].Type);
+        Assert.Equal(TokenType.Comma, tokens[4].Type);
+        Assert.Equal(TokenType.Identifier, tokens[5].Type);
+        Assert.Equal(TokenType.From, tokens[6].Type);
+        Assert.Equal(TokenType.Identifier, tokens[7].Type);
+        Assert.Equal(TokenType.As, tokens[8].Type);
+        Assert.Equal(TokenType.Identifier, tokens[9].Type);
+        Assert.Equal(TokenType.Join, tokens[10].Type);
+        Assert.Equal(TokenType.Identifier, tokens[11].Type);
+        Assert.Equal(TokenType.As, tokens[12].Type);
+        Assert.Equal(TokenType.Identifier, tokens[13].Type);
+        Assert.Equal(TokenType.On, tokens[14].Type);
+        Assert.Equal(TokenType.Identifier, tokens[15].Type);
+        Assert.Equal(TokenType.Equal, tokens[16].Type);
+        Assert.Equal(TokenType.Identifier, tokens[17].Type);
+        Assert.Equal(TokenType.EOF, tokens[^1].Type);
+    }
 }

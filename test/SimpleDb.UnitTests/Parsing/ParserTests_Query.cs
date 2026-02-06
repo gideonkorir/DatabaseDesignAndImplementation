@@ -25,10 +25,11 @@ namespace SimpleDb.UnitTests.Parsing
                 Assert.NotNull(valueExpr);
                 Assert.Equal(columns[i], valueExpr.Member.Lexeme);
             }
-
-            string[] tables = table.Split(',', StringSplitOptions.RemoveEmptyEntries);
-            Assert.NotNull(expression.From.Source.TableOrViewName);
-            Assert.Equal(tables[0], expression.From.Source.TableOrViewName.Lexeme);
+            AssertIs<MemberAccessExpression>(expression.From!.Source, ts =>
+            {
+                Assert.NotNull(ts.Member);
+                Assert.Equal(table, ts.Member.Lexeme);
+            });
 
         }
 
@@ -50,11 +51,11 @@ namespace SimpleDb.UnitTests.Parsing
                 Assert.NotNull(valueExpr);
                 Assert.Equal(columns[i], valueExpr.Member.Lexeme);
             }
-            string[] tables = table.Split(',', StringSplitOptions.RemoveEmptyEntries);
-            Assert.NotNull(expression.From.Source.TableOrViewName);
-            Assert.Equal(tables[0], expression.From.Source.TableOrViewName.Lexeme);
-            Assert.NotNull(expression.Where);
-            // Further assertions on the where clause can be added here
+            AssertIs<MemberAccessExpression>(expression.From!.Source, ts =>
+            {
+                Assert.NotNull(ts.Member);
+                Assert.Equal(table, ts.Member.Lexeme);
+            });
         }
 
         [Fact]
@@ -78,8 +79,15 @@ namespace SimpleDb.UnitTests.Parsing
                 {
                     Assert.Equal("column1", me.Member.Lexeme);
                 });
-                Assert.NotNull(c.From.Source.Alias);
-                Assert.Equal("t1", c.From.Source.Alias!.Lexeme);
+                AssertIs<AliasExpression>(c.From!.Source, alias =>
+                {
+                    Assert.Equal("t1", alias.Alias.Lexeme);
+                    AssertIs<MemberAccessExpression>(alias.Expression, ts =>
+                    {
+                        Assert.NotNull(ts.Member);
+                        Assert.Equal("table1", ts.Member.Lexeme);
+                    });
+                });
             });
         }
 
@@ -138,9 +146,27 @@ namespace SimpleDb.UnitTests.Parsing
                 {
                     Assert.Equal("column1", me.Member.Lexeme);
                 });
-                Assert.NotNull(c.From.Source.NestedQuery);
-                Assert.NotNull(c.From.Source.Alias);
-                Assert.Equal("t1", c.From.Source.Alias!.Lexeme);
+                AssertIs<AliasExpression>(c.From!.Source, alias =>
+                {
+                    Assert.Equal("t1", alias.Alias!.Lexeme);
+                    AssertIs<SubQuery>(alias.Expression, sq =>
+                    {
+                        Assert.NotNull(sq.Query);
+                        AssertIs<SelectStatement>(sq.Query, inner =>
+                        {
+                            Assert.Single(inner.Values);
+                            AssertIs<MemberAccessExpression>(inner.Values[0], me =>
+                            {
+                                Assert.Equal("column2", me.Member.Lexeme);
+                            });
+                            AssertIs<MemberAccessExpression>(inner.From!.Source, ts =>
+                            {
+                                Assert.Equal("table2", ts.Member.Lexeme);
+                            });
+                        });
+                    });
+                });
+                
             });
         }
 
@@ -172,9 +198,30 @@ namespace SimpleDb.UnitTests.Parsing
                 {
                     Assert.Equal("column1", me.Member.Lexeme);
                 });
-                Assert.NotNull(c.From.Source.NestedQuery);
-                Assert.NotNull(c.From.Source.Alias);
-                Assert.Equal("t1", c.From.Source.Alias!.Lexeme);
+                AssertIs<AliasExpression>(c.From!.Source, alias =>
+                {
+                    Assert.Equal("t1", alias.Alias!.Lexeme);
+                    AssertIs<SubQuery>(alias.Expression, sq =>
+                    {
+                        AssertIs<SelectStatement>(sq.Query, inner =>
+                        {
+                            Assert.Single(inner.Values);
+                            AssertIs<AliasExpression>(inner.Values[0], alias =>
+                            {
+                                AssertIs<MemberAccessExpression>(alias.Expression, me =>
+                                {
+                                    Assert.Equal("column2", me.Member.Lexeme);
+                                });
+                            });
+                            AssertIs<MemberAccessExpression>(inner.From!.Source, ts =>
+                            {
+                                Assert.NotNull(ts.Member);
+                                Assert.Equal("table2", ts.Member.Lexeme);
+                            });
+                        });
+                    });
+                    
+                });
             });
         }
 
@@ -253,10 +300,335 @@ namespace SimpleDb.UnitTests.Parsing
                 {
                     Assert.Equal("column1", me.Member.Lexeme);
                 });
-                AssertIs<MethodCallExpression>(c.From.Source.TableValuedFunction!, mce =>
+                AssertIs<MethodCallExpression>(c.From!.Source, mce =>
                 {
                     Assert.Equal("GetItems", mce.MethodName.Lexeme);
                     Assert.Empty(mce.Arguments);
+                });
+            });
+        }
+
+        [Fact]
+        public void Parse_TableValuedFunction_With_Arguments_Select()
+        {
+            List<SyntaxToken> tokens = [
+                new(TokenType.Select, "select", 0, null),
+                new(TokenType.Identifier, "column1", 7, null),
+                new(TokenType.From, "from", 15, null),
+                new(TokenType.Identifier, "GetItems", 20, null),
+                new(TokenType.LeftParen, "(", 28, null),
+                new(TokenType.IntValue, "100", 29, 100),
+                new(TokenType.RightParen, ")", 32, null),
+                new(TokenType.EOF, "", 34, null)
+                ];
+            var parser = new Parser(tokens);
+            var stmt = parser.Parse();
+            Assert.NotNull(stmt);
+            AssertIs<SelectStatement>(stmt, c =>
+            {
+                Assert.Single(c.Values);
+                AssertIs<MemberAccessExpression>(c.Values[0], me =>
+                {
+                    Assert.Equal("column1", me.Member.Lexeme);
+                });
+                AssertIs<MethodCallExpression>(c.From!.Source, mce =>
+                {
+                    Assert.Equal("GetItems", mce.MethodName.Lexeme);
+                    Assert.Single(mce.Arguments);
+                    AssertIs<LiteralExpression>(mce.Arguments[0], le =>
+                    {
+                        Assert.Equal(100, le.LiteralToken.Literal);
+                    });
+                });
+            });
+        }
+
+        //joins
+
+        [Fact]
+        public void Parse_SelectFromMultipleTablesWithJoin()
+        {
+            var query = "select u.id, u.name, count(o.id) as order_ct from users u join orders o on u.id = o.user_id";
+            var tokens = new Scanner(query).GetTokens();
+            var parser = new Parser(tokens);
+            var stmt = parser.Parse();
+            Assert.NotNull(stmt);
+            AssertIs<SelectStatement>(stmt, c =>
+            {
+                Assert.Equal(3,c.Values.Count);
+                AssertIs<MemberAccessExpression>(c.Values[0], me =>
+                {
+                    Assert.Equal("u", me.Object?.Lexeme);
+                    Assert.Equal("id", me.Member.Lexeme);
+                });
+                AssertIs<MemberAccessExpression>(c.Values[1], me =>
+                {
+                    Assert.Equal("u", me.Object?.Lexeme);
+                    Assert.Equal("name", me.Member.Lexeme);
+                });
+                AssertAliasOf<MethodCallExpression>(c.Values[2], "order_ct", me =>
+                {
+                    Assert.Equal("count", me.MethodName.Lexeme);
+                    Assert.Single(me.Arguments);
+                    AssertIs<MemberAccessExpression>(me.Arguments[0], arg =>
+                    {
+                        Assert.Equal("o", arg.Object?.Lexeme);
+                        Assert.Equal("id", arg.Member.Lexeme);
+                    });
+                });
+
+                AssertIs<JoinExpression>(c.From!.Source, je =>
+                {
+                    Assert.Equal(JoinType.Inner, je.JoinType);
+                    //left
+                    AssertIs<AliasExpression>(je.Left, left =>
+                    {
+                        Assert.Equal("u", left.Alias?.Lexeme);
+                        AssertIs<MemberAccessExpression>(left.Expression, t =>
+                        {
+                            Assert.Equal("users", t.Member.Lexeme);
+                        });
+                    });
+                    //right
+                    AssertIs<AliasExpression>(je.Right, right =>
+                    {
+                        Assert.Equal("o", right.Alias.Lexeme);
+                        AssertIs<MemberAccessExpression>(right.Expression, m =>
+                        {
+                            Assert.Equal("orders", m.Member.Lexeme);
+                        });
+                    });
+                    //condition
+                    AssertIs<BinaryExpression>(je.Condition, binary =>
+                    {
+                        Assert.Equal(TokenType.Equal, binary.OperatorToken.Type);
+                        AssertIs<MemberAccessExpression>(binary.Left, left =>
+                        {
+                            Assert.Equal("u", left.Object?.Lexeme);
+                            Assert.Equal("id", left.Member.Lexeme);
+                        });
+                        AssertIs<MemberAccessExpression>(binary.Right, right =>
+                        {
+                            Assert.Equal("o", right.Object?.Lexeme);
+                            Assert.Equal("user_id", right.Member.Lexeme);
+                        });
+                    });
+                });
+            });
+        }
+
+        [Fact]
+        public void Parse_SelectFromMultipleTablesWithCommaJoin()
+        {
+            var query = "select u.id, u.name, count(o.id) as order_ct from users u, orders o on u.id = o.user_id";
+            var tokens = new Scanner(query).GetTokens();
+            var parser = new Parser(tokens);
+            var stmt = parser.Parse();
+            Assert.NotNull(stmt);
+            AssertIs<SelectStatement>(stmt, c =>
+            {
+                Assert.Equal(3, c.Values.Count);
+                AssertIs<MemberAccessExpression>(c.Values[0], me =>
+                {
+                    Assert.Equal("u", me.Object?.Lexeme);
+                    Assert.Equal("id", me.Member.Lexeme);
+                });
+                AssertIs<MemberAccessExpression>(c.Values[1], me =>
+                {
+                    Assert.Equal("u", me.Object?.Lexeme);
+                    Assert.Equal("name", me.Member.Lexeme);
+                });
+                AssertAliasOf<MethodCallExpression>(c.Values[2], "order_ct", me =>
+                {
+                    Assert.Equal("count", me.MethodName.Lexeme);
+                    Assert.Single(me.Arguments);
+                    AssertIs<MemberAccessExpression>(me.Arguments[0], arg =>
+                    {
+                        Assert.Equal("o", arg.Object?.Lexeme);
+                        Assert.Equal("id", arg.Member.Lexeme);
+                    });
+                });
+
+                AssertIs<JoinExpression>(c.From!.Source, je =>
+                {
+                    Assert.Equal(JoinType.Inner, je.JoinType);
+                    //left
+                    AssertIs<AliasExpression>(je.Left, left =>
+                    {
+                        Assert.Equal("u", left.Alias?.Lexeme);
+                        AssertIs<MemberAccessExpression>(left.Expression, t =>
+                        {
+                            Assert.Equal("users", t.Member.Lexeme);
+                        });
+                    });
+                    //right
+                    AssertIs<AliasExpression>(je.Right, right =>
+                    {
+                        Assert.Equal("o", right.Alias.Lexeme);
+                        AssertIs<MemberAccessExpression>(right.Expression, m =>
+                        {
+                            Assert.Equal("orders", m.Member.Lexeme);
+                        });
+                    });
+                    //condition
+                    AssertIs<BinaryExpression>(je.Condition, binary =>
+                    {
+                        Assert.Equal(TokenType.Equal, binary.OperatorToken.Type);
+                        AssertIs<MemberAccessExpression>(binary.Left, left =>
+                        {
+                            Assert.Equal("u", left.Object?.Lexeme);
+                            Assert.Equal("id", left.Member.Lexeme);
+                        });
+                        AssertIs<MemberAccessExpression>(binary.Right, right =>
+                        {
+                            Assert.Equal("o", right.Object?.Lexeme);
+                            Assert.Equal("user_id", right.Member.Lexeme);
+                        });
+                    });
+                });
+            });
+        }
+
+        [Fact]
+        public void Parse_SelectFromMultipleTablesWithInnerJoin()
+        {
+            var query = "select u.id, u.name, count(o.id) as order_ct from users u inner join orders o on u.id = o.user_id";
+            var tokens = new Scanner(query).GetTokens();
+            var parser = new Parser(tokens);
+            var stmt = parser.Parse();
+            Assert.NotNull(stmt);
+            AssertIs<SelectStatement>(stmt, c =>
+            {
+                Assert.Equal(3, c.Values.Count);
+                AssertIs<MemberAccessExpression>(c.Values[0], me =>
+                {
+                    Assert.Equal("u", me.Object?.Lexeme);
+                    Assert.Equal("id", me.Member.Lexeme);
+                });
+                AssertIs<MemberAccessExpression>(c.Values[1], me =>
+                {
+                    Assert.Equal("u", me.Object?.Lexeme);
+                    Assert.Equal("name", me.Member.Lexeme);
+                });
+                AssertAliasOf<MethodCallExpression>(c.Values[2], "order_ct", me =>
+                {
+                    Assert.Equal("count", me.MethodName.Lexeme);
+                    Assert.Single(me.Arguments);
+                    AssertIs<MemberAccessExpression>(me.Arguments[0], arg =>
+                    {
+                        Assert.Equal("o", arg.Object?.Lexeme);
+                        Assert.Equal("id", arg.Member.Lexeme);
+                    });
+                });
+
+                AssertIs<JoinExpression>(c.From!.Source, je =>
+                {
+                    Assert.Equal(JoinType.Inner, je.JoinType);
+                    //left
+                    AssertIs<AliasExpression>(je.Left, left =>
+                    {
+                        Assert.Equal("u", left.Alias?.Lexeme);
+                        AssertIs<MemberAccessExpression>(left.Expression, t =>
+                        {
+                            Assert.Equal("users", t.Member.Lexeme);
+                        });
+                    });
+                    //right
+                    AssertIs<AliasExpression>(je.Right, right =>
+                    {
+                        Assert.Equal("o", right.Alias.Lexeme);
+                        AssertIs<MemberAccessExpression>(right.Expression, m =>
+                        {
+                            Assert.Equal("orders", m.Member.Lexeme);
+                        });
+                    });
+                    //condition
+                    AssertIs<BinaryExpression>(je.Condition, binary =>
+                    {
+                        Assert.Equal(TokenType.Equal, binary.OperatorToken.Type);
+                        AssertIs<MemberAccessExpression>(binary.Left, left =>
+                        {
+                            Assert.Equal("u", left.Object?.Lexeme);
+                            Assert.Equal("id", left.Member.Lexeme);
+                        });
+                        AssertIs<MemberAccessExpression>(binary.Right, right =>
+                        {
+                            Assert.Equal("o", right.Object?.Lexeme);
+                            Assert.Equal("user_id", right.Member.Lexeme);
+                        });
+                    });
+                });
+            });
+        }
+
+        [Fact]
+        public void Parse_SelectFromMultipleTablesWithOuterJoin()
+        {
+            var query = "select u.id, u.name, count(o.id) as order_ct from users u outer join orders o on u.id = o.user_id";
+            var tokens = new Scanner(query).GetTokens();
+            var parser = new Parser(tokens);
+            var stmt = parser.Parse();
+            Assert.NotNull(stmt);
+            AssertIs<SelectStatement>(stmt, c =>
+            {
+                Assert.Equal(3, c.Values.Count);
+                AssertIs<MemberAccessExpression>(c.Values[0], me =>
+                {
+                    Assert.Equal("u", me.Object?.Lexeme);
+                    Assert.Equal("id", me.Member.Lexeme);
+                });
+                AssertIs<MemberAccessExpression>(c.Values[1], me =>
+                {
+                    Assert.Equal("u", me.Object?.Lexeme);
+                    Assert.Equal("name", me.Member.Lexeme);
+                });
+                AssertAliasOf<MethodCallExpression>(c.Values[2], "order_ct", me =>
+                {
+                    Assert.Equal("count", me.MethodName.Lexeme);
+                    Assert.Single(me.Arguments);
+                    AssertIs<MemberAccessExpression>(me.Arguments[0], arg =>
+                    {
+                        Assert.Equal("o", arg.Object?.Lexeme);
+                        Assert.Equal("id", arg.Member.Lexeme);
+                    });
+                });
+
+                AssertIs<JoinExpression>(c.From!.Source, je =>
+                {
+                    Assert.Equal(JoinType.Outer, je.JoinType);
+                    //left
+                    AssertIs<AliasExpression>(je.Left, left =>
+                    {
+                        Assert.Equal("u", left.Alias?.Lexeme);
+                        AssertIs<MemberAccessExpression>(left.Expression, t =>
+                        {
+                            Assert.Equal("users", t.Member.Lexeme);
+                        });
+                    });
+                    //right
+                    AssertIs<AliasExpression>(je.Right, right =>
+                    {
+                        Assert.Equal("o", right.Alias.Lexeme);
+                        AssertIs<MemberAccessExpression>(right.Expression, m =>
+                        {
+                            Assert.Equal("orders", m.Member.Lexeme);
+                        });
+                    });
+                    //condition
+                    AssertIs<BinaryExpression>(je.Condition, binary =>
+                    {
+                        Assert.Equal(TokenType.Equal, binary.OperatorToken.Type);
+                        AssertIs<MemberAccessExpression>(binary.Left, left =>
+                        {
+                            Assert.Equal("u", left.Object?.Lexeme);
+                            Assert.Equal("id", left.Member.Lexeme);
+                        });
+                        AssertIs<MemberAccessExpression>(binary.Right, right =>
+                        {
+                            Assert.Equal("o", right.Object?.Lexeme);
+                            Assert.Equal("user_id", right.Member.Lexeme);
+                        });
+                    });
                 });
             });
         }

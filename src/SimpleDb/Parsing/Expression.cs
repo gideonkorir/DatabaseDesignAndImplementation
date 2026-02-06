@@ -41,14 +41,20 @@
     }
 
     public record class MemberAccessExpression(
+        SyntaxToken? Object,
+        SyntaxToken? DotToken,
         SyntaxToken Member) : Expression
     {
+        public MemberAccessExpression(SyntaxToken Member) : this(null, null, Member)
+        {
+        }
+        public bool IsQualified => Object != null;
         public override SyntaxKind Kind => SyntaxKind.MemberAccess;
     }
 
     public record class AliasExpression(
         Expression Expression,
-        SyntaxToken AsToken,
+        SyntaxToken? AsToken,
         SyntaxToken Alias) : Expression
     {
         public override SyntaxKind Kind => SyntaxKind.Alias;

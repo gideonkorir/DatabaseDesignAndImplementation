@@ -1,4 +1,6 @@
-﻿namespace SimpleDb.Parsing
+﻿using SimpleDb.Metadata;
+
+namespace SimpleDb.Parsing
 {
     public partial class Parser(List<SyntaxToken> tokens)
     {
@@ -41,6 +43,11 @@
                 throw new Exception("Expected at least one column in SELECT statement.");
             }
 
+            if (Current.Type == TokenType.EOF)
+            {
+                return new SelectStatement(select, columns, null, null);
+            }
+
             FromClause fromExpr = FromClause();
             WhereClause? whereExpr = null;
             if(Current.Type == TokenType.Where)
@@ -64,23 +71,74 @@
         private FromClause FromClause()
         {
             SyntaxToken fromToken = Match(TokenType.From); // Consume 'FROM'
-            SubQuery? nestedQuery = null;
-            SyntaxToken? tableOrViewName = null;
-            MethodCallExpression? methodCall = null;
+            Expression src = Join();
+
+            return new FromClause(fromToken, src);
+        }
+
+        private Expression Join()
+        {
+            Expression src = QuerySource();
+            do
+            {
+                JoinType? type = null;
+                if(Current.Type == TokenType.Comma)
+                {
+                    //select a, b from tb1, tb2 on tb1.a = tb2.k
+                    Advance();
+                    type = JoinType.Inner;
+                }
+                else if(Current.Type == TokenType.Join)
+                {
+                    //tb1 join tb2
+                    Advance(); //consume join
+                    type = JoinType.Inner;
+                }
+                else if (Current.Type == TokenType.Inner)
+                {
+                    //tb1 inner join tbl2
+                    Advance(); //consume inner
+                    Match(TokenType.Join); //consume join
+                    type = JoinType.Inner;
+                }
+                else if (Current.Type == TokenType.Outer)
+                {
+                    //tbl outer join tbl2
+                    Advance();
+                    Match(TokenType.Join);
+                    type = JoinType.Outer;
+                }
+
+                if(!type.HasValue)
+                {
+                    break;
+                }
+                Expression right = QuerySource();
+                Match(TokenType.On);
+                Expression condition = Expression();
+                src = new JoinExpression(type.Value, src, right, condition);
+            }
+            while (true);
+            return src;
+        }
+
+        private Expression QuerySource()
+        {
+            Expression source;
 
             switch (Current.Type)
             {
                 case TokenType.LeftParen:
-                    nestedQuery = SubQuery();
+                    source = SubQuery();
                     break;
                 case TokenType.Identifier:
                     if (Peek(1).Type == TokenType.LeftParen)
                     {
-                        methodCall = MethodCallExpression();
+                        source = MethodCallExpression();
                     }
                     else
                     {
-                        tableOrViewName = Match(TokenType.Identifier);
+                        source = MemberAccess();
                     }
                     break;
                 default:
@@ -89,10 +147,11 @@
             }
 
             SyntaxToken? alias = null;
+            SyntaxToken? asToken = null;
 
             if (Current.Type == TokenType.As)
             {
-                Advance(); // Consume 'AS'
+                asToken = Advance(); // Consume 'AS'
                 alias = Match(TokenType.Identifier);
             }
             else if (Current.Type == TokenType.Identifier)
@@ -100,9 +159,12 @@
                 alias = Advance(); // Consume alias
             }
 
-            QuerySource source = QuerySource.FromOne(tableOrViewName, nestedQuery, methodCall, alias);
 
-            return new FromClause(fromToken, source);
+            if (alias is not null)
+                return new AliasExpression(source, asToken, alias);
+
+            return source;
+                
         }
 
         private WhereClause WhereClause()
@@ -217,12 +279,14 @@
                         // It's a method call
                         return MethodCallExpression();
                     }
-                    SyntaxToken identifierToken = Advance(); // Consume identifier
-                    return new MemberAccessExpression(identifierToken);
+                    else
+                    {
+                        return MemberAccess();
+                    }
                 case TokenType.LeftParen:
                     return ParenthesizedExpression();
                 case TokenType.Star:
-                    SyntaxToken starToken = Advance(); // Consume '*'
+                    SyntaxToken starToken = Advance(); // Consume '*' in select * from
                     return new StarExpression(starToken);
                 default:
                     throw new Exception($"Unexpected token: {Current.Type}");
@@ -267,6 +331,22 @@
             }
             SyntaxToken rightParen = Match(TokenType.RightParen); // Consume ')'
             return new MethodCallExpression(methodName, leftParen, arguments, rightParen);
+        }
+
+        private MemberAccessExpression MemberAccess()
+        {
+            SyntaxToken identifierToken = Advance(); // Consume identifier
+            if (Current.Type == TokenType.Dot)
+            {
+                SyntaxToken dot = Advance();
+                // Consume identifier
+                SyntaxToken qualifiedIdentifier = Match(TokenType.Identifier);
+                return new MemberAccessExpression(identifierToken, dot, qualifiedIdentifier);
+            }
+            else
+            {
+                return new MemberAccessExpression(identifierToken);
+            }
         }
 
         public SyntaxToken Advance()

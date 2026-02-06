@@ -14,7 +14,12 @@ namespace SimpleDb.Parsing
             ["where"] = TokenType.Where,
             ["as"] = TokenType.As,
             ["and"] = TokenType.And,
-            ["or"] = TokenType.Or
+            ["or"] = TokenType.Or,
+            ["join"] = TokenType.Join,
+            ["on"] = TokenType.On,
+            ["inner"] = TokenType.Inner,
+            ["outer"] = TokenType.Outer,
+            ["cross"] = TokenType.Cross
         };
 
         private int _pos = 0, _start = 0;
@@ -75,6 +80,9 @@ namespace SimpleDb.Parsing
                     case ',':
                         AddToken(TokenType.Comma, null);
                         break; 
+                    case '.':
+                        AddToken(TokenType.Dot, null);
+                        break;
                     case '0':
                     case '1':
                     case '2':

@@ -208,5 +208,14 @@ namespace SimpleDb.UnitTests.Parsing
             T vt = (T)value;
             next(vt);
         }
+
+        private static void AssertAliasOf<T>(object value, string expectedAlias, Action<T> next)
+        {
+            Assert.NotNull(value);
+            Assert.IsType<AliasExpression>(value);
+            AliasExpression aliasExpression = (AliasExpression)value;
+            Assert.Equal(expectedAlias, aliasExpression.Alias.Lexeme);
+            AssertIs<T>(aliasExpression.Expression, next);
+        }
     }
 }
