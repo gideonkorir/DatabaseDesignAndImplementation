@@ -14,11 +14,10 @@ public class TableManagerUnitTests : AbstractTxTest
     [Fact]
     public void Catalog_Tables_Are_Created()
     {
-        TableManager mgr = new(_tx, true);
-
+        TableManager mgr = new(_tx, true); //ensures catalogs are created.
         var tableCatalog = Path.Join(_fixture.FileManager.Directory.FullName, $"{TableManager.TableCatalog}.tbl");
         var fieldCatalog = Path.Join(_fixture.FileManager.Directory.FullName, $"{TableManager.FieldCatalog}.tbl");
-
+        _tx.Commit();
         Assert.True(File.Exists(tableCatalog));
         Assert.True(File.Exists(fieldCatalog));
     }
