@@ -217,7 +217,7 @@ namespace SimpleDb.Parsing
         Expression Equal()
         {
             Expression left = Term();
-            while (Current.Type == TokenType.Equal || Current.Type == TokenType.BangEqual
+            if (Current.Type == TokenType.Equal || Current.Type == TokenType.BangEqual
                 || Current.Type == TokenType.LessThan || Current.Type == TokenType.LessThanEqual
                 || Current.Type == TokenType.GreaterThan || Current.Type == TokenType.GreaterThanEqual)
             {
