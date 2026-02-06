@@ -466,4 +466,50 @@ public class ScannerTests
         Assert.Equal(TokenType.Identifier, tokens[7].Type);
         Assert.Equal(TokenType.EOF, tokens[^1].Type);
     }
+
+    [Theory]
+    [InlineData("select id, name, age from users", 9)]
+    public void Scanner_QueryWithMultipleColumns(string query, int token_count)
+    {
+        // Arrange
+        var scanner = new Scanner(query);
+        // Act
+        var tokens = scanner.GetTokens();
+        // Assert
+        Assert.Equal(token_count, tokens.Count);
+        Assert.Equal(TokenType.Select, tokens[0].Type);
+        Assert.Equal(TokenType.Identifier, tokens[1].Type);
+        Assert.Equal(TokenType.Comma, tokens[2].Type);
+        Assert.Equal(TokenType.Identifier, tokens[3].Type);
+        Assert.Equal(TokenType.Comma, tokens[4].Type);
+        Assert.Equal(TokenType.Identifier, tokens[5].Type);
+        Assert.Equal(TokenType.From, tokens[6].Type);
+        Assert.Equal(TokenType.Identifier, tokens[7].Type);
+        Assert.Equal(TokenType.EOF, tokens[^1].Type);
+    }
+
+    [Fact]
+    public void Scanner_QueryWithMultipleColumnsAndAlias()
+    {
+        // Arrange
+        var query = "select id, name as full_name, age from users as u";
+        var scanner = new Scanner(query);
+        // Act
+        var tokens = scanner.GetTokens();
+        // Assert
+        Assert.Equal(13, tokens.Count);
+        Assert.Equal(TokenType.Select, tokens[0].Type);
+        Assert.Equal(TokenType.Identifier, tokens[1].Type);
+        Assert.Equal(TokenType.Comma, tokens[2].Type);
+        Assert.Equal(TokenType.Identifier, tokens[3].Type);
+        Assert.Equal(TokenType.As, tokens[4].Type);
+        Assert.Equal(TokenType.Identifier, tokens[5].Type);
+        Assert.Equal(TokenType.Comma, tokens[6].Type);
+        Assert.Equal(TokenType.Identifier, tokens[7].Type);
+        Assert.Equal(TokenType.From, tokens[8].Type);
+        Assert.Equal(TokenType.Identifier, tokens[9].Type);
+        Assert.Equal(TokenType.As, tokens[10].Type);
+        Assert.Equal(TokenType.Identifier, tokens[11].Type);
+        Assert.Equal(TokenType.EOF, tokens[^1].Type);
+    }
 }

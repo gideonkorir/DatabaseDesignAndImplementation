@@ -72,6 +72,9 @@ namespace SimpleDb.Parsing
                     case '\'':
                         AddString();
                         break;
+                    case ',':
+                        AddToken(TokenType.Comma, null);
+                        break; 
                     case '0':
                     case '1':
                     case '2':
@@ -87,6 +90,7 @@ namespace SimpleDb.Parsing
                     case '\r':
                     case ' ':
                     case '\t':
+                    case '\n':
                         break;
                     default:
                         {
@@ -194,7 +198,7 @@ namespace SimpleDb.Parsing
 
         private void AddIdentifierOrKeyword()
         {
-            while(char.IsLetterOrDigit(Current))
+            while(char.IsLetterOrDigit(Current) || Current == '_')
             {
                 Advance();
             }
